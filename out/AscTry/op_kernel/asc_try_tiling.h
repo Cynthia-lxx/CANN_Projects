@@ -20,7 +20,14 @@
 #include <cstdint>
 
 struct AscTryTilingData {
-    uint32_t size;
+    uint32_t smallCoreDataNum;   // 小核(常规核)总元素数
+    uint32_t bigCoreDataNum;     // 大核(多32B)总元素数
+    uint32_t finalBigTileNum;    // 大核循环批次数
+    uint32_t finalSmallTileNum;  // 小核循环批次数
+    uint32_t tileDataNum;        // 单批标准元素数(UB预算决定)
+    uint32_t smallTailDataNum;   // 小核尾批元素数
+    uint32_t bigTailDataNum;     // 大核尾批元素数
+    uint32_t tailBlockNum;       // 大核个数(=32B块总数对核数取余)
 };
 
 #endif // ASC_TRY_TILING_H
