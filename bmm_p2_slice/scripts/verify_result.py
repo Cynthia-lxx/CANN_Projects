@@ -7,12 +7,29 @@ try:
 except ImportError:
     bfloat16 = None
 
-# Per-case output specs: 1 cases
+# Per-case output specs. Tolerances follow the problem's fp16-input criterion
+# (relative & absolute error both 1e-3); anchor case 0 was verified with a
+# tighter 1e-4 band in P2b, so it is kept there to catch regressions earlier.
 # Each spec: (name, dtype, rtol, atol, tol)
 # tol = max fraction of elements allowed to mismatch (0.0 = strict)
 case_output_specs = {
     0: [
-        ("y", np.float32, 0.0001, 0.0001, 0.0001),
+        ("y", np.float32, 1e-4, 1e-4, 0.0),
+    ],
+    1: [
+        ("y", np.float32, 1e-3, 1e-3, 0.0),
+    ],
+    2: [
+        ("y", np.float32, 1e-3, 1e-3, 0.0),
+    ],
+    3: [
+        ("y", np.float32, 1e-3, 1e-3, 0.0),
+    ],
+    4: [
+        ("y", np.float32, 1e-3, 1e-3, 0.0),
+    ],
+    5: [
+        ("y", np.float32, 1e-3, 1e-3, 0.0),
     ],
 }
 
@@ -84,15 +101,15 @@ if __name__ == "__main__":
         print(f"Unknown case_id {case_id}. Available: {sorted(case_output_specs.keys())}")
         sys.exit(1)
 
-    output_dir = "output"
+    case_dir = os.path.join("output", f"case{case_id}")
     all_pass = True
     specs = case_output_specs[case_id]
     if not specs:
         print(f"Case {case_id}: No outputs to verify (all optional) — PASS")
         sys.exit(0)
     for name, dtype, rtol, atol, tol in specs:
-        output_path = os.path.join(output_dir, name + ".bin")
-        golden_path = os.path.join(output_dir, "golden_" + name + ".bin")
+        output_path = os.path.join(case_dir, name + ".bin")
+        golden_path = os.path.join(case_dir, "golden_" + name + ".bin")
         if not os.path.exists(output_path):
             print(f"FAILED: output {name}.bin not found")
             all_pass = False

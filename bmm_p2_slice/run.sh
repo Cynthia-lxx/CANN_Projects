@@ -6,6 +6,10 @@ cd "${SCRIPT_DIR}"
 
 OP_NAME="batch_matmul_max_sum_custom"
 
+# Case ids known to the data chain. MUST stay in sync with main.asc
+# (CASE_SHAPES / NUM_CASES) and scripts/gen_data.py (CASES).
+ALL_CASES="0 1 2 3 4 5"
+
 if [ -z "${ASCEND_HOME_PATH:-}" ]; then
     echo "ERROR: ASCEND_HOME_PATH is not set. Please run:"
     echo "  source /usr/local/Ascend/ascend-toolkit/set_env.sh"
@@ -29,18 +33,36 @@ cd build
 python3 ../scripts/gen_data.py
 
 echo "=== [4/4] Run + Verify ==="
-rm -f input/*.bin
-cp input/case0/* input/ 2>/dev/null || true
-cp output/golden_case0/* output/ 2>/dev/null || true
-find output -name '*.bin' ! -name 'golden_*' -delete 2>/dev/null || true
-if timeout 120 "./${OP_NAME}"; then
-    if python3 ../scripts/verify_result.py 0; then
-        echo "=== PASSED ==="
-    else
-        echo "=== FAILED ==="
-        exit 1
-    fi
+if [ "$#" -eq 0 ]; then
+    RUN_CASES="0"
+elif [ "$1" = "all" ]; then
+    RUN_CASES="${ALL_CASES}"
 else
-    echo "=== FAILED (kernel exited non-zero or timed out) ==="
+    RUN_CASES="$*"
+fi
+
+overall_pass=1
+for cid in ${RUN_CASES}; do
+    case_dir="output/case${cid}"
+    rm -f "${case_dir}/y.bin" 2>/dev/null || true
+    echo "--- case ${cid} ---"
+    if timeout 120 "./${OP_NAME}" "${cid}"; then
+        if python3 ../scripts/verify_result.py "${cid}"; then
+            echo "=== case ${cid}: PASSED ==="
+        else
+            echo "=== case ${cid}: FAILED (verify) ==="
+            overall_pass=0
+        fi
+    else
+        echo "=== case ${cid}: FAILED (kernel exited non-zero or timed out) ==="
+        overall_pass=0
+    fi
+done
+
+if [ "${overall_pass}" -eq 1 ]; then
+    echo "=== ALL PASSED ==="
+    exit 0
+else
+    echo "=== SOME CASES FAILED ==="
     exit 1
 fi
