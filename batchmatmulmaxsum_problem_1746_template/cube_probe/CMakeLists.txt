@@ -13,21 +13,24 @@ else()
 endif()
 
 add_executable(cube_probe cube_probe.asc)
+add_executable(off_matmul_abs off_matmul_abs.asc)
 
-target_link_libraries(cube_probe PRIVATE
-    tiling_api
-    register
-    platform
-    unified_dlog
-    dl
-    m
-    graph_base
-)
+foreach(_tgt cube_probe off_matmul_abs)
+    target_link_libraries(${_tgt} PRIVATE
+        tiling_api
+        register
+        platform
+        unified_dlog
+        dl
+        m
+        graph_base
+    )
 
-target_include_directories(cube_probe PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
-)
+    target_include_directories(${_tgt} PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
+    )
 
-target_compile_options(cube_probe PRIVATE
-    $<$<COMPILE_LANGUAGE:ASC>:--npu-arch=${SOC_ARCH}>
-)
+    target_compile_options(${_tgt} PRIVATE
+        $<$<COMPILE_LANGUAGE:ASC>:--npu-arch=${SOC_ARCH}>
+    )
+endforeach()

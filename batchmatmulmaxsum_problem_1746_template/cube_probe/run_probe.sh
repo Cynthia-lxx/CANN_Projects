@@ -19,5 +19,9 @@ rm -rf build
 cmake -S . -B build
 cmake --build build -j4
 
-echo "=== Run ==="
-./build/cube_probe
+echo "=== Run cube_probe ==="
+./build/cube_probe || true
+
+echo ""
+echo "=== Run off_matmul_abs (official matmul_abs tutorial baseline) ==="
+./build/off_matmul_abs || true
