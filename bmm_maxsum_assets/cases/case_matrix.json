@@ -1,0 +1,233 @@
+{
+  "meta": {
+    "purpose": "BatchMatmulMaxSum P0 用例矩阵（语义锚点 + 布局/边界/规模覆盖域）",
+    "source_of_truth": "p:/Dev/CANN_Learning_Refs/.codebuddy/memory/stage_goal_batchmatmul_maxsum.md",
+    "semantic_baseline_doc": "docs/semantic_baseline.md",
+    "created": "2026-09-05",
+    "case_count": 23,
+    "output_dtype": "fp32",
+    "tolerance_note": "按输入 dtype 生效档：fp16/bf16 相对+绝对误差均 < 1e-3；输出恒 FP32",
+    "tolerance": {"rel": 1e-3, "abs": 1e-3, "dtype_scope": ["fp16", "bf16"]},
+    "gen_default_domain": [-2.0, 2.0],
+    "gen_seed_layout_group": 1001,
+    "layout_equiv_rule": "layout_equiv 组同 shape/seed/dtype 的四 tx 组合输出必须逐位相等（存储布局不改变数学结果）"
+  },
+  "cases": [
+    {
+      "id": "ex1_anchor",
+      "group": "anchor",
+      "comment": "官方示例1 基础计算：x1=[[[1,0],[0,1]]], x2=[[[1,0,-1],[0,1,0]]]",
+      "b": 1, "m": 2, "n": 3, "k": 2,
+      "dtype": "fp16", "tx1": false, "tx2": false,
+      "gen": {"kind": "fixed", "x1": [1.0, 0.0, 0.0, 1.0], "x2": [1.0, 0.0, -1.0, 0.0, 1.0, 0.0]},
+      "tags": ["anchor", "anchor_k_out_of_domain"],
+      "runtime": "local",
+      "expect": [2.0]
+    },
+    {
+      "id": "ex2_anchor",
+      "group": "anchor",
+      "comment": "官方示例2 转置存储布局：逻辑同示例1，x1 storage(B,K,M)=(1,2,2), x2 storage(B,N,K)=(1,3,2)",
+      "b": 1, "m": 2, "n": 3, "k": 2,
+      "dtype": "fp16", "tx1": true, "tx2": true,
+      "gen": {"kind": "fixed", "x1": [1.0, 0.0, 0.0, 1.0], "x2": [1.0, 0.0, -1.0, 0.0, 1.0, 0.0]},
+      "tags": ["anchor", "anchor_k_out_of_domain", "layout_tt"],
+      "runtime": "local",
+      "expect": [2.0]
+    },
+    {
+      "id": "ex3_anchor",
+      "group": "anchor",
+      "comment": "官方示例3 全负相似度：MaxSim 初值禁 0。x1=[[[1,0]]], x2=[[[-1,-2],[0,0]]]",
+      "b": 1, "m": 1, "n": 2, "k": 2,
+      "dtype": "fp16", "tx1": false, "tx2": false,
+      "gen": {"kind": "fixed", "x1": [1.0, 0.0], "x2": [-1.0, -2.0, 0.0, 0.0]},
+      "tags": ["anchor", "anchor_k_out_of_domain", "full_negative"],
+      "runtime": "local",
+      "expect": [-1.0]
+    },
+    {
+      "id": "lay_ff_fp16",
+      "group": "layout_equiv",
+      "comment": "非方阵布局等价-ff；K=3 非 8 倍数也是布局语义锚点的合法输入（演示域）",
+      "b": 2, "m": 2, "n": 4, "k": 3,
+      "dtype": "fp16", "tx1": false, "tx2": false,
+      "gen": {"kind": "random", "seed": 1001, "x1_domain": [-2.0, 2.0], "x2_domain": [-2.0, 2.0]},
+      "tags": ["layout_ff"],
+      "runtime": "local"
+    },
+    {
+      "id": "lay_ff_bf16",
+      "group": "layout_equiv",
+      "b": 2, "m": 2, "n": 4, "k": 3,
+      "dtype": "bf16", "tx1": false, "tx2": false,
+      "gen": {"kind": "random", "seed": 1001, "x1_domain": [-2.0, 2.0], "x2_domain": [-2.0, 2.0]},
+      "tags": ["layout_ff"],
+      "runtime": "local"
+    },
+    {
+      "id": "lay_ft_fp16",
+      "group": "layout_equiv",
+      "b": 2, "m": 2, "n": 4, "k": 3,
+      "dtype": "fp16", "tx1": false, "tx2": true,
+      "gen": {"kind": "random", "seed": 1001, "x1_domain": [-2.0, 2.0], "x2_domain": [-2.0, 2.0]},
+      "tags": ["layout_ft"],
+      "runtime": "local"
+    },
+    {
+      "id": "lay_ft_bf16",
+      "group": "layout_equiv",
+      "b": 2, "m": 2, "n": 4, "k": 3,
+      "dtype": "bf16", "tx1": false, "tx2": true,
+      "gen": {"kind": "random", "seed": 1001, "x1_domain": [-2.0, 2.0], "x2_domain": [-2.0, 2.0]},
+      "tags": ["layout_ft"],
+      "runtime": "local"
+    },
+    {
+      "id": "lay_tf_fp16",
+      "group": "layout_equiv",
+      "b": 2, "m": 2, "n": 4, "k": 3,
+      "dtype": "fp16", "tx1": true, "tx2": false,
+      "gen": {"kind": "random", "seed": 1001, "x1_domain": [-2.0, 2.0], "x2_domain": [-2.0, 2.0]},
+      "tags": ["layout_tf"],
+      "runtime": "local"
+    },
+    {
+      "id": "lay_tf_bf16",
+      "group": "layout_equiv",
+      "b": 2, "m": 2, "n": 4, "k": 3,
+      "dtype": "bf16", "tx1": true, "tx2": false,
+      "gen": {"kind": "random", "seed": 1001, "x1_domain": [-2.0, 2.0], "x2_domain": [-2.0, 2.0]},
+      "tags": ["layout_tf"],
+      "runtime": "local"
+    },
+    {
+      "id": "lay_tt_fp16",
+      "group": "layout_equiv",
+      "b": 2, "m": 2, "n": 4, "k": 3,
+      "dtype": "fp16", "tx1": true, "tx2": true,
+      "gen": {"kind": "random", "seed": 1001, "x1_domain": [-2.0, 2.0], "x2_domain": [-2.0, 2.0]},
+      "tags": ["layout_tt"],
+      "runtime": "local"
+    },
+    {
+      "id": "lay_tt_bf16",
+      "group": "layout_equiv",
+      "b": 2, "m": 2, "n": 4, "k": 3,
+      "dtype": "bf16", "tx1": true, "tx2": true,
+      "gen": {"kind": "random", "seed": 1001, "x1_domain": [-2.0, 2.0], "x2_domain": [-2.0, 2.0]},
+      "tags": ["layout_tt"],
+      "runtime": "local"
+    },
+    {
+      "id": "tail_m_fp16",
+      "group": "tail_edge",
+      "comment": "M=17 非 16 倍数尾块 + K=32 下界",
+      "b": 2, "m": 17, "n": 16, "k": 32,
+      "dtype": "fp16", "tx1": false, "tx2": false,
+      "gen": {"kind": "random", "seed": 2001, "x1_domain": [-2.0, 2.0], "x2_domain": [-2.0, 2.0]},
+      "tags": ["tail_m", "k_min"],
+      "runtime": "local"
+    },
+    {
+      "id": "tail_n_bf16",
+      "group": "tail_edge",
+      "comment": "N=33 非 16 倍数尾块",
+      "b": 1, "m": 16, "n": 33, "k": 64,
+      "dtype": "bf16", "tx1": false, "tx2": false,
+      "gen": {"kind": "random", "seed": 2002, "x1_domain": [-2.0, 2.0], "x2_domain": [-2.0, 2.0]},
+      "tags": ["tail_n"],
+      "runtime": "local"
+    },
+    {
+      "id": "tail_both_fp16",
+      "group": "tail_edge",
+      "comment": "M=15,N=19 双尾块；K=40 为 8 的整数倍",
+      "b": 3, "m": 15, "n": 19, "k": 40,
+      "dtype": "fp16", "tx1": false, "tx2": false,
+      "gen": {"kind": "random", "seed": 2003, "x1_domain": [-2.0, 2.0], "x2_domain": [-2.0, 2.0]},
+      "tags": ["tail_m", "tail_n"],
+      "runtime": "local"
+    },
+    {
+      "id": "n1_bf16",
+      "group": "tail_edge",
+      "comment": "N=1：MaxSim 单元素取最大值路径",
+      "b": 3, "m": 32, "n": 1, "k": 128,
+      "dtype": "bf16", "tx1": false, "tx2": false,
+      "gen": {"kind": "random", "seed": 2004, "x1_domain": [-2.0, 2.0], "x2_domain": [-2.0, 2.0]},
+      "tags": ["max_n_single"],
+      "runtime": "local"
+    },
+    {
+      "id": "m1_fp16",
+      "group": "tail_edge",
+      "comment": "M=1：求和归约单元素路径",
+      "b": 4, "m": 1, "n": 16, "k": 64,
+      "dtype": "fp16", "tx1": false, "tx2": false,
+      "gen": {"kind": "random", "seed": 2005, "x1_domain": [-2.0, 2.0], "x2_domain": [-2.0, 2.0]},
+      "tags": ["max_m_single"],
+      "runtime": "local"
+    },
+    {
+      "id": "fullneg_fp16",
+      "group": "tail_edge",
+      "comment": "x1 全正、x2 全负 → 乘积恒负：验证 MaxSim 初值禁 0（整行全负时返回最大负数）",
+      "b": 2, "m": 6, "n": 8, "k": 32,
+      "dtype": "fp16", "tx1": false, "tx2": false,
+      "gen": {"kind": "random", "seed": 2006, "x1_domain": [0.5, 2.0], "x2_domain": [-2.0, -0.5]},
+      "tags": ["full_negative", "k_min"],
+      "runtime": "local"
+    },
+    {
+      "id": "k8192_fp16",
+      "group": "scale",
+      "comment": "K=8192 上界：长 K 点积累加",
+      "b": 1, "m": 16, "n": 16, "k": 8192,
+      "dtype": "fp16", "tx1": false, "tx2": false,
+      "gen": {"kind": "random", "seed": 3001, "x1_domain": [-1.0, 1.0], "x2_domain": [-1.0, 1.0]},
+      "tags": ["k_max"],
+      "runtime": "local"
+    },
+    {
+      "id": "m8192_bf16",
+      "group": "scale",
+      "comment": "M=8192 上界（bmm 输出 8192×16 行方向）",
+      "b": 1, "m": 8192, "n": 16, "k": 32,
+      "dtype": "bf16", "tx1": false, "tx2": false,
+      "gen": {"kind": "random", "seed": 3002, "x1_domain": [-1.0, 1.0], "x2_domain": [-1.0, 1.0]},
+      "tags": ["m_max", "k_min"],
+      "runtime": "local"
+    },
+    {
+      "id": "b64_fp16",
+      "group": "scale",
+      "comment": "B=64 上界（batch 并行切分路径）",
+      "b": 64, "m": 16, "n": 16, "k": 32,
+      "dtype": "fp16", "tx1": false, "tx2": false,
+      "gen": {"kind": "random", "seed": 3003, "x1_domain": [-1.0, 1.0], "x2_domain": [-1.0, 1.0]},
+      "tags": ["b_max", "k_min"],
+      "runtime": "local"
+    },
+    {
+      "id": "s28a_fp16",
+      "group": "scale",
+      "comment": "规模上限代表 a：B×M×K=2^20；flops=B×M×N×K 大，cloud 环境生成",
+      "b": 1, "m": 4096, "n": 512, "k": 256,
+      "dtype": "fp16", "tx1": false, "tx2": false,
+      "gen": {"kind": "random", "seed": 3004, "x1_domain": [-1.0, 1.0], "x2_domain": [-1.0, 1.0]},
+      "tags": ["scale_2p28"],
+      "runtime": "cloud"
+    },
+    {
+      "id": "s28b_bf16",
+      "group": "scale",
+      "comment": "规模上限代表 b：B×M×K=B×N×K=2^22；cloud 环境生成",
+      "b": 8, "m": 1024, "n": 1024, "k": 512,
+      "dtype": "bf16", "tx1": false, "tx2": false,
+      "gen": {"kind": "random", "seed": 3005, "x1_domain": [-1.0, 1.0], "x2_domain": [-1.0, 1.0]},
+      "tags": ["scale_2p28"],
+      "runtime": "cloud"
+    }
+  ]
+}

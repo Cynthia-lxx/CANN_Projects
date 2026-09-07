@@ -1,0 +1,37 @@
+# CANN_OpHelper operator spec -- P1 real-device carrier.
+# Addcmul FP16: y = a + x1 * x2 * 2.0  (torch.addcmul(a, x1, x2, value=2.0)
+# with value folded into the expression constant; element-wise, ND).
+#
+# dtype = float16 on every tensor -> fillgen emits the fp16 tail kernel:
+#   32B-block big/small core tiling (16 half/block), shape 416 = 26 blocks
+#   with 8 cores -> perCoreBlocks=3, tailBlockNum=2 (cores 0..1 take 4 blocks).
+# shape hints are all [416] and consistent -> verify element count = 416,
+# a whole number of 32B blocks as required by the P1 tail contract.
+
+op_type: AddcmulCustom          # PascalCase op type (drives names / msopgen op)
+soc_version: ascend910b4        # msopgen -c -> ai_core-ascend910b4
+description: 融合加乘 y = A + B*D*2（FP16，32B 块尾块载体；P1 真机验证用例）
+
+inputs:
+- name: A
+  param_type: required
+  format: [ND]
+  type: [float16]
+  shape: [416]
+- name: B
+  param_type: required
+  format: [ND]
+  type: [float16]
+  shape: [416]
+- name: D
+  param_type: required
+  format: [ND]
+  type: [float16]
+  shape: [416]
+outputs:
+- name: Y
+  param_type: required
+  format: [ND]
+  type: [float16]
+  shape: [416]
+expr: A + B * D * 2.0 = Y
