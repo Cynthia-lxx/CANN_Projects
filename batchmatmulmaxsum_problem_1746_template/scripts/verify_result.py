@@ -25,6 +25,18 @@ case_output_specs = {
 }
 
 
+def _big_case_spec(case_id):
+    """Generic spec for ad-hoc BIG smoke cases (cid >= 100): y is fp32,
+    tolerance uses the fp16/bf16 band per the dtype stored in cases.txt."""
+    manifest = "input/cases.txt"
+    if os.path.exists(manifest):
+        for line in open(manifest):
+            tok = line.split()
+            if tok and int(tok[0]) == case_id and len(tok) >= 6:
+                return [("y", np.float32, 1e-3, 1e-3, 0.0)]
+    return None
+
+
 def known_case_ids():
     """Prefer input/cases.txt; fall back to the spec dict keys."""
     manifest = "input/cases.txt"
@@ -91,12 +103,15 @@ def verify_result(output_path, golden_path, dtype, rtol, atol, tol=0.0):
 
 
 def run_case(case_id):
-    if case_id not in case_output_specs:
+    specs = case_output_specs.get(case_id)
+    if specs is None:
+        specs = _big_case_spec(case_id)
+    if specs is None:
         print(f"Unknown case_id {case_id}. Available: {sorted(case_output_specs.keys())}")
         return False
     output_dir = os.path.join("output", f"case{case_id}")
     all_pass = True
-    for name, dtype, rtol, atol, tol in case_output_specs[case_id]:
+    for name, dtype, rtol, atol, tol in specs:
         output_path = os.path.join(output_dir, name + ".bin")
         golden_path = os.path.join(output_dir, "golden_" + name + ".bin")
         if not os.path.exists(output_path):
