@@ -14,8 +14,9 @@ endif()
 
 add_executable(cube_probe cube_probe.asc)
 add_executable(off_matmul_abs off_matmul_abs.asc)
+add_executable(copy_sem_probe copy_sem_probe.asc)
 
-foreach(_tgt cube_probe off_matmul_abs)
+foreach(_tgt cube_probe off_matmul_abs copy_sem_probe)
     target_link_libraries(${_tgt} PRIVATE
         tiling_api
         register
