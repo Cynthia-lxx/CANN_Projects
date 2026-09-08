@@ -49,3 +49,11 @@ echo "=== Run shape_sweep (F4: route1 SetDim==numBlocks, shape grid incl tail/ti
 echo ""
 echo "=== Run cube_iterall (F5: official pure-cube __cube__ IterateAll GM-C, non-constant golden) ==="
 ./build/cube_iterall || true
+
+echo ""
+echo "=== Run cube_mc (F6: pure-cube multi-core IterateAll GM-C, off0/off1) ==="
+./build/cube_mc || true
+
+echo ""
+echo "=== Run v2_proto (F7: e2e pure-cube full-C workspace + v1 vector reduce -> y) ==="
+./build/v2_proto || true
