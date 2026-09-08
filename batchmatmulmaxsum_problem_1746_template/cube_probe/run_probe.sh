@@ -27,5 +27,9 @@ echo "=== Run copy_sem_probe (DataCopy gap semantics direct measurement) ==="
 ./build/copy_sem_probe || true
 
 echo ""
-echo "=== Run off_matmul_abs (official matmul_abs tutorial baseline) ==="
+echo "=== Run off_matmul_abs (F1/F2/base: SetDim, numBlocks) sweep ==="
 ./build/off_matmul_abs || true
+
+echo ""
+echo "=== Run shape_sweep (F4: route1 SetDim==numBlocks, shape grid incl tail/tiny) ==="
+./build/shape_sweep || true
