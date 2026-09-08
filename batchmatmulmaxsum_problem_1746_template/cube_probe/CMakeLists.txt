@@ -16,8 +16,9 @@ add_executable(cube_probe cube_probe.asc)
 add_executable(off_matmul_abs off_matmul_abs.asc)
 add_executable(copy_sem_probe copy_sem_probe.asc)
 add_executable(shape_sweep shape_sweep.asc)
+add_executable(cube_iterall cube_iterall.asc)
 
-foreach(_tgt cube_probe off_matmul_abs copy_sem_probe shape_sweep)
+foreach(_tgt cube_probe off_matmul_abs copy_sem_probe shape_sweep cube_iterall)
     target_link_libraries(${_tgt} PRIVATE
         tiling_api
         register

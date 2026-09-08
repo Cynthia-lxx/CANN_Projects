@@ -45,3 +45,7 @@ echo "=== Run off_matmul_abs (F1/F2/base: SetDim, numBlocks) sweep ==="
 echo ""
 echo "=== Run shape_sweep (F4: route1 SetDim==numBlocks, shape grid incl tail/tiny) ==="
 ./build/shape_sweep || true
+
+echo ""
+echo "=== Run cube_iterall (F5: official pure-cube __cube__ IterateAll GM-C, non-constant golden) ==="
+./build/cube_iterall || true
