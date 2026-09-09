@@ -11,7 +11,8 @@
 | `memory/handoff_batchmatmulmaxsum_judge_2026-09-06.md` | **跨日主文档**：版本演进史、判题平台规则、硬经验、提交前清单 |
 | `memory/MEMORY.md` | 判题平台提交规则（§判题平台提交规则）：入口=仅 `kernel.asc`、禁 API 清单、**每 iteration 恰 1 launch（Expected 75）**、E75/G20 推断 |
 | `memory/stage_goal_batchmatmul_maxsum.md` | 阶段目标/验收基准 |
-| `memory/2026-09-08.md` | **最新日志**：F 系列取证收口、v2 分相移植、转置 host 归一化修复、**20 例 case_matrix 云验全绿（§12.8）** |
+| `memory/2026-09-09.md` | **最新日志**：判题 2/15 复盘、dtype 码语义根因（fp16=1/bf16∈{2,27}）、no-regret 修复 |
+| `memory/2026-09-08.md` | F 系列取证收口、v2 分相移植、转置 host 归一化修复、**20 例 case_matrix 云验全绿（§12.8）** |
 | `memory/2026-09-07.md` | 判题平台规则实测（E75/G20/profiling）、probe-01、编译坑（`__gm__` cast） |
 | `memory/2026-09-06.md` | 前期探针史（A/B/D 探针、GetTensorC 竞态初证） |
 | `plans/PLAN_1746_*.md` 等 | 各阶段计划与判读（F 系列/架构/路线图） |
@@ -58,11 +59,19 @@
    CANN 在 `$HOME/Ascend/cann-9.0.0`；push 走 gh-proxy；本地 PowerShell 用 `git -C` 绝对路径执行。
 8. **协作提醒**：相邻 CANN_OpHelper 工具可能把 Projects/ 当试验场地改文件，异动先 diff 再处理。
 
-## 五、下一步动作（按序）
+## 五、下一步动作（按序，2026-09-09 更新）
 
-1. 用户重提判题（提交内容 = 现 kernel.asc 全文）。预期两态：
-   - 点 2-9 由 Wrong Answer → PASS → transpose 修复确认收口，转攻点 10 TLE / 11-15 Skipped；
-   - 仍 Wrong → 判题 shape 可能非「逻辑 + tx」模型，转物理 shape 解析排查。
-2. 待赛方口径开放项：① profiling 是否仍强制每 iteration 恰 1 launch；② 隐藏用例规模/时限。
-3. 依口径决策：恰 1 launch 强约束 → F8 单 launch 研究；多 launch 合规 → 上 M 向多核提速解决大 shape 耗时。
-4. 顺手修 gen_data_casematrix.py 注释（20 vs 21），非阻塞。
+> 2026-09-09 判题再提仍 2P+7WA+1TLE+5SKIP（结果 unchanged），已另起新根因：**dtype 码语义**
+> （模板枚举 2=bf16 vs aclDataType 27=ACL_BF16）。修复 = `isBf16 = (dtypeCode != 1)`，零风险。
+> 详细证据链见 `memory/2026-09-09.md`。
+
+1. 用户云验回归（需 git pull 最新 kernel.asc + gen_data_casematrix.py）：
+   `bash run.sh`（10 例）→ `gen_data_casematrix.py && ./build/batch_matmul_max_sum_custom && verify_result.py`（预期 33/33）
+   → `BMM_ACL_DTYPE=1 ./build/batch_matmul_max_sum_custom && verify_result.py`（模拟 acl 码 27 喂入，预期仍全绿）。
+2. 重提判题（提交内容 = 现 kernel.asc）。预期两态：
+   - 点 2-9 WA→PASS → dtype 假设收口，转攻点 10 TLE（cube 门控从未在判题触发：profiling 恰 1 launch 约束，
+     点 10 应是大 bf16 或 M/N<128 巨型 fp16 走 v1 超时）；
+   - 仍 WA → dtype 排除，转 shape 解析/数值/其他调用语义排查。
+3. 待赛方口径开放项：① profiling 是否仍强制每 iteration 恰 1 launch；② 隐藏用例规模/时限。
+4. 依口径决策 TLE 方案：恰 1 launch 强约束 → 单 launch 多核 M 向切分（F6 备件）；多 launch 合规 → v2 分相提速。
+5. 顺手修 gen_data_casematrix.py 头部注释（20 vs 21），非阻塞。
